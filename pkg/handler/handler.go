@@ -19,6 +19,6 @@ func (h *Handler) InitRoutes() *gin.Engine {
 
 	router.GET("/auth", h.Auth)
 
-	router.GET("/streaming/reload_cha", h.ReloadChannels)
+	router.GET("/streaming/reload_cha", h.UpdateChannelsCache)
 	return router
 }

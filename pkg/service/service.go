@@ -10,11 +10,13 @@ type Auth interface {
 
 type UsersCacheList interface {
 	ClearUserCacheByIp(userIp string)
-	AddUserCacheItem(item cache.UserCacheItem)
+	AddUserCacheItem(userIp string, item cache.UserCacheItem)
+	ClearUserCacheByUid(uid int)
+	GetUserCacheByIp(userIp string) (cache.UserCacheItem, bool)
 }
 
 type ChannelsCache interface {
-	ReloadChannels()
+	UpdateChannelsCache()
 }
 
 type Service struct {

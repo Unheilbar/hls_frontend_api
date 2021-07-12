@@ -12,6 +12,6 @@ func NewChannelsCacheService(cache cache.ChannelsCache) *ChannelsCacheService {
 	}
 }
 
-func (cs *ChannelsCacheService) ReloadChannels() {
+func (cs *ChannelsCacheService) UpdateChannelsCache() {
 
 }

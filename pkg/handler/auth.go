@@ -25,7 +25,7 @@ func (h *Handler) Auth(c *gin.Context) {
 
 	response, err := h.services.GetResponseCode(userIp, channelAllias)
 
-	h.services.AddUserCacheItem(userIp, channelAllias)
+	//h.services.AddUserCacheItem(userIp, channelAllias)
 
 	if err != nil {
 		c.AbortWithStatus(500)
@@ -35,8 +35,7 @@ func (h *Handler) Auth(c *gin.Context) {
 	c.Status(response)
 }
 
-func (h *Handler) ReloadChannels(c *gin.Context) {
-	h.services.ReloadChannels()
+func (h *Handler) UpdateChannelsCache(c *gin.Context) {
+	h.services.UpdateChannelsCache()
 	c.Status(200)
-
 }

@@ -1,4 +1,4 @@
-package whoipapi
+package channels_update
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ const (
 	baseWhoIpUrl = "http://vladlink.tv/playlist/whocha/whoip/?hlswhoip="
 )
 
-type WhoipApiResponse struct {
+type ChannelsInfo struct {
 	Uid int
 	Arh int
 	Ser []int

@@ -11,5 +11,11 @@ func NewCacheAuth(cache cache.UsersCache) *AuthCacheService {
 }
 
 func (a *AuthCacheService) GetResponseCode(userIp string, channelAllias string) (int, error) {
-	return 200, nil
+	responseCode, err := a.cache.GetResponseCode(userIp, channelAllias)
+
+	if err != nil {
+		return 404, err
+	}
+
+	return responseCode, nil
 }

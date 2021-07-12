@@ -15,11 +15,12 @@ import (
 func main() {
 	srv := new(hls_frontend_api.Server)
 
-	cache := cache.NewCacheList()
+	cache := cache.NewCache()
 
 	services := service.NewService(cache)
 
 	handlers := handler.NewHandler(services)
+
 	go func() {
 		if err := srv.Run("3000", handlers.InitRoutes()); err != nil {
 			fmt.Printf("error occured while running http server: %s", err.Error())

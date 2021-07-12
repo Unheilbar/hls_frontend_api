@@ -3,11 +3,13 @@ package cache
 type UsersCache interface {
 	GetResponseCode(userIp string, channelAllias string) (int, error)
 	ClearUserCacheByIp(userIp string)
-	AddUserCacheItem(item UserCacheItem)
+	ClearUserCacheByUid(uid int)
+	AddUserCacheItem(userIp string, item UserCacheItem)
+	GetUserCacheByIp(userIp string) (UserCacheItem, bool)
 }
 
 type ChannelsCache interface {
-	ReloadChannels()
+	UpdateChannelsCache()
 }
 
 type Cache struct {
