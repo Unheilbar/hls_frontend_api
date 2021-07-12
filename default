@@ -1,0 +1,219 @@
+upstream backend0 {
+        server 127.0.0.1:3000;
+}
+
+
+proxy_cache_path /ngtmp levels=1:2 use_temp_path=off keys_zone=cache:100m max_size=6G inactive=6h;
+proxy_cache_path /ng3tmp levels=1:2 use_temp_path=off keys_zone=cachez:100m max_size=34G inactive=1d loader_threshold=300 loader_files=200;
+proxy_ignore_headers Expires Cache-Control;
+proxy_cache_use_stale error timeout invalid_header http_502;
+
+include /etc/nginx/sites-available/acsd_up;
+
+server {
+	listen 80 sndbuf=64k backlog=511;
+	set $my_normalized_hash "$ealias|$eloc|$ecatv|$eidate|$eifile";
+
+
+proxy_cache off;
+proxy_cache_valid 1d;
+proxy_cache_valid 404 30s;
+proxy_cache_lock on;
+add_header Frontend     $hostname;
+add_header X-Proxy-Cache $upstream_cache_status;
+
+proxy_set_header Host $host;
+proxy_set_header X-Forwarded-For $remote_addr;
+
+proxy_connect_timeout 5;
+proxy_send_timeout    5;
+proxy_read_timeout    5;
+aio threads;
+proxy_ignore_client_abort on;
+
+proxy_http_version 1.1;
+#proxy_set_header Connection "";
+
+
+max_ranges 0;
+
+
+        if ($geo = 0) {
+            return 404;
+        }
+
+	add_header Access-Control-Allow-Origin *;
+        location = /auth {
+            internal;
+            proxy_cache       cache;
+            proxy_cache_valid 200 2h;
+            proxy_cache_valid any 5s;
+            proxy_cache_key "auth|$new_remote_addr|$ealias";
+            proxy_pass              http://backend0;
+	    proxy_http_version 1.0;
+            proxy_pass_request_body off;
+            proxy_set_header    X-Real-IP $new_remote_addr;
+            proxy_set_header        Content-Length "";
+            proxy_set_header        X-Original-URI $ealias;
+                proxy_cache_lock on;
+                proxy_connect_timeout 12;
+                proxy_send_timeout    12;
+                proxy_read_timeout    18;
+                proxy_ignore_client_abort on;
+        }
+
+
+        location ~ ^/(hls|timeback)/(s|p) {
+                proxy_cache cachez;
+                proxy_cache_key $my_normalized_hash;
+                proxy_pass http://backend_arhiv_vl1;
+                aio threads;
+        }
+
+
+        location ~ ^/(hls|timeback)/v {
+                proxy_cache cachez;
+                proxy_cache_key $my_normalized_hash;
+                proxy_pass http://backend_arhiv_vl2;
+                aio threads;
+        }
+
+        location ~ ^/(hls|timeback)/x {
+                proxy_cache cachez;
+                proxy_cache_key $my_normalized_hash;
+                proxy_pass http://backend_arhiv_rs1;
+                aio threads;
+        }
+
+
+	server_name localhost;
+
+	location /playlist {
+		if ($http_user_agent ~* "(Winamp)" ) {
+			return 403;
+		}
+#		proxy_pass http://backend0;
+		proxy_pass http://tvrec_upsteam;
+#		proxy_http_version 1.0;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $new_remote_addr;
+		proxy_set_header X-Forwarded-For $new_remote_addr;
+		proxy_connect_timeout 12;
+		proxy_send_timeout    12;
+		proxy_read_timeout    18;
+	}
+
+#        location /playlist/program/ {
+#                proxy_cache off;
+#                proxy_pass http://109.126.3.55;
+#        }
+
+
+	location /medialocator/1/sources.json {
+#		proxy_pass http://109.126.1.90;
+		proxy_pass http://tvrec_upsteam;
+                add_header Frontend     $hostname;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $new_remote_addr;
+		proxy_set_header X-Forwarded-For $remote_addr;
+		proxy_connect_timeout 12;
+		proxy_send_timeout    12;
+		proxy_read_timeout    18;
+	}
+
+#    include /scripts/hls_api/nginx_ch;
+
+    location ~ ^/streaming/[^/]+/[^/]+/[^/]+/[^/]+\.ts$ {
+                proxy_cache cachez;
+                proxy_cache_key "$ealias|$eloc|$ecatv|$date_year$date_month_numeric$date_day|$eifile";
+                proxy_pass http://$ip_hls_streamer;
+                add_header X-Proxy-Cache $upstream_cache_status;
+                add_header Frontend     $hostname;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $remote_addr;
+                proxy_connect_timeout 6;
+                proxy_send_timeout    6;
+                proxy_read_timeout    6;
+    }
+
+#    include /scripts/hls_api/nginx_ch2;
+
+   location ~ ^/streaming/[^/]+/[^/]+/[^/]+/playlist\.m3u8$ {
+                auth_request     /auth;
+                auth_request_set $auth_status $upstream_status;
+                add_header Inetra-Timeshift 'base-uri="http://$host/timeshift/$ealias/$eloc/$ecatv/playlist.m3u8";duration=3602';
+                add_header Frontend     $hostname;
+                proxy_cache cache;
+                proxy_cache_valid 3s;
+                proxy_cache_valid 404 10s;
+                proxy_cache_key "$uri";
+                proxy_cache_lock on;
+                proxy_pass http://$ip_hls_streamer;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $new_remote_addr;
+                proxy_set_header X-Forwarded-For $new_remote_addr;
+                proxy_ignore_client_abort on;
+	}
+
+
+    location ~ ^/timeshift/[^/]+/[^/]+/[^/]+/playlist\.m3u8$ {
+                auth_request     /auth;
+		proxy_set_header authX	$auth_status;
+                auth_request_set $auth_status $upstream_status;
+                proxy_cache cache;
+                proxy_cache_valid 5s;
+                proxy_cache_valid 404 10s;
+                proxy_cache_key "$request_uri";
+                proxy_cache_lock on;
+		proxy_pass http://tvrec_upsteam;
+		add_header Frontend     $hostname;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $new_remote_addr;
+                proxy_set_header X-Forwarded-For $new_remote_addr;
+		proxy_ignore_client_abort on;
+
+    }
+
+
+        location /server-status {
+                stub_status on;
+                access_log   off;
+                allow 127.0.0.1;
+                deny all;
+	}
+
+#http://172.17.31.2/rolic/market4/test_frdownloads/fws/test1
+	 location ~/rolic/market4/downloads/fws/(.*) {
+                proxy_pass http://109.126.3.46/frdownloads/fws/$1;
+                add_header Frontend     $hostname;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $remote_addr;
+                proxy_connect_timeout 20;
+                proxy_send_timeout    20;
+                proxy_read_timeout    20;
+
+                proxy_cache cache;
+                proxy_cache_valid 500s;
+                proxy_cache_valid 404 5s;
+                proxy_cache_key "$request_uri";
+                proxy_cache_lock on;
+
+        }
+
+
+        location /rolic {
+#	    alias /scripts/hls_api/public;
+	     proxy_cache cache;
+             proxy_cache_key "$uri";
+  	     proxy_pass http://tvrec_upsteam;
+             proxy_cache_valid 500s;
+             proxy_cache_valid 404 5s;	
+	}
+	location / {
+	root /scripts/public;
+	}
+
+}
+
