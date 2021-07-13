@@ -1,9 +1,10 @@
 package cache
 
 import (
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 type UserCacheItem struct {
@@ -46,7 +47,7 @@ func (c *UsersCacheList) GetUserCacheByIp(userIp string) (UserCacheItem, bool) {
 	defer c.mx.RUnlock()
 	res, ok := c.CacheMap[userIp]
 	if ok {
-		fmt.Printf("Got user %v from cache \n", userIp)
+		logrus.Printf("Got user %v from cache ", userIp)
 	}
 
 	return res, ok
@@ -56,24 +57,23 @@ func (c *UsersCacheList) AddUserCacheItem(userIp string, item UserCacheItem) {
 	c.mx.Lock()
 	defer c.mx.Unlock()
 	c.CacheMap[userIp] = item
-	fmt.Printf("User %v added. Cache size %v  arhv %v\n", item.Uid, len(c.CacheMap), item.Arh)
+	logrus.Printf("User %v added. Cache size %v  arhv %v", item.Uid, len(c.CacheMap), item.Arh)
 }
 
 func (c *UsersCacheList) ClearUserCacheByIp(userIp string) {
 	c.mx.Lock()
 	defer c.mx.Unlock()
 	delete(c.CacheMap, userIp)
-	fmt.Printf("User with ip %v has been deleted \n", userIp)
+	logrus.Printf("User with ip %v has been deleted ", userIp)
 }
 
 func (c *UsersCacheList) ClearUserCacheByUid(uid int) {
 	c.mx.Lock()
 	defer c.mx.Unlock()
-	fmt.Println("gere")
 	for key, val := range c.CacheMap {
 		if val.Uid == uid {
 			delete(c.CacheMap, key)
-			fmt.Printf("User with id %v has been deleted \n", uid)
+			logrus.Printf("User with id %v has been deleted ", uid)
 		}
 	}
 }
@@ -81,12 +81,12 @@ func (c *UsersCacheList) ClearUserCacheByUid(uid int) {
 func (c *UsersCacheList) CleanExpired() {
 	c.mx.Lock()
 	defer c.mx.Unlock()
-	fmt.Printf("GC is starting... User cache size %v \n", len(c.CacheMap))
+	logrus.Printf("GC is starting... User cache size %v ", len(c.CacheMap))
 	for key, val := range c.CacheMap {
 		if time.Now().Unix()-val.CreatedTime.Unix() > int64(c.expireTime) {
 			delete(c.CacheMap, key)
-			fmt.Printf("Cache for user id:%v has expired \n", key)
+			logrus.Printf("Cache for user id:%v has expired ", key)
 		}
 	}
-	fmt.Printf("GC is finished.. User cache size %v \n", len(c.CacheMap))
+	logrus.Printf("GC is finished.. User cache size %v ", len(c.CacheMap))
 }

@@ -1,8 +1,7 @@
 package service
 
 import (
-	"log"
-
+	"github.com/sirupsen/logrus"
 	"github.com/unheilbar/hls_frontend_api/pkg/cache"
 	"github.com/unheilbar/hls_frontend_api/pkg/channels_update"
 )
@@ -20,7 +19,7 @@ func NewChannelsCacheService(cache cache.ChannelsCache) *ChannelsCacheService {
 func (cs *ChannelsCacheService) UpdateChannelsCache() error {
 	channelsInfo, err := channels_update.GetChannelsInfo()
 	if err != nil {
-		log.Fatal("Error occured during updating channels cache")
+		logrus.Errorf("Error occured during updating channels cache")
 		return err
 	}
 

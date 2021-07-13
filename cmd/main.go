@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -16,6 +15,7 @@ import (
 )
 
 func main() {
+	logrus.SetFormatter(new(logrus.JSONFormatter))
 
 	if err := godotenv.Load(); err != nil {
 		logrus.Fatalf("error loading env variables: %s", err.Error())
@@ -43,7 +43,7 @@ func main() {
 
 	go func() {
 		if err := srv.Run(os.Getenv("port"), handlers.InitRoutes()); err != nil {
-			fmt.Printf("error occured while running http server: %s", err.Error())
+			logrus.Printf("error occured while running http server: %s", err.Error())
 		}
 	}()
 
