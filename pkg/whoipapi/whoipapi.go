@@ -3,33 +3,40 @@ package whoipapi
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 	"github.com/unheilbar/hls_frontend_api/pkg/cache"
 )
 
-const (
-	baseWhoIpUrl = "http://vladlink.tv/playlist/whocha/whoip/?hlswhoip="
-)
+func Init() {
+	if err := godotenv.Load(); err != nil {
+		logrus.Fatalf("error loading env variables: %s", err.Error())
+	}
+}
 
-type WhoipApiResponse struct {
+type whoipApiResponse struct {
 	Uid int
 	Arh int
 	Ser []int
 }
 
-func GetWhoApiResponse(userIp string) (WhoipApiResponse, error) {
-	result := &WhoipApiResponse{}
+func FetchUserItemByIp(userIp string) (cache.UserCacheItem, error) {
+	baseWhoIpUrl := os.Getenv("who_ip_url")
+
+	result := &whoipApiResponse{}
 	err := getJson(baseWhoIpUrl+userIp, result)
 
 	if err != nil {
-		return WhoipApiResponse{}, err
+		return cache.UserCacheItem{}, err
 	}
 
-	return *result, nil
-}
+	return getUserItemFromResponse(*result), nil
 
-func getJson(url string, target *WhoipApiResponse) error {
+}
+func getJson(url string, target *whoipApiResponse) error {
 	var myClient = &http.Client{Timeout: 3 * time.Second}
 	r, err := myClient.Get(url)
 	if err != nil {
@@ -40,7 +47,7 @@ func getJson(url string, target *WhoipApiResponse) error {
 	return json.NewDecoder(r.Body).Decode(target)
 }
 
-func GetUserItemFromResponse(r WhoipApiResponse) (cache.UserCacheItem, bool) {
+func getUserItemFromResponse(r whoipApiResponse) cache.UserCacheItem {
 	var access bool
 	if r.Arh == 1 {
 		access = true
@@ -48,15 +55,11 @@ func GetUserItemFromResponse(r WhoipApiResponse) (cache.UserCacheItem, bool) {
 		access = false
 	}
 	item := cache.UserCacheItem{
-		Arh:  access,
-		Ser:  r.Ser,
-		Uid:  r.Uid,
-		Time: time.Now().Local(),
+		Arh:         access,
+		Ser:         r.Ser,
+		Uid:         r.Uid,
+		CreatedTime: time.Now().Local(),
 	}
 
-	if len(r.Ser) > 0 {
-		return item, true
-	} else {
-		return item, false
-	}
+	return item
 }

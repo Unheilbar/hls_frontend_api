@@ -17,8 +17,11 @@ func NewHandler(services *service.Service) *Handler {
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 
-	router.GET("/auth", h.Auth)
+	router.GET("/auth", h.auth)
 
-	router.GET("/streaming/reload_cha", h.UpdateChannelsCache)
+	router.GET("/streaming/reload_cha", h.updateChannelsCache)
+
+	router.GET("/delete_user/:uid", h.clearUserCacheById)
+
 	return router
 }

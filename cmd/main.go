@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
+	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 	"github.com/unheilbar/hls_frontend_api"
 	"github.com/unheilbar/hls_frontend_api/pkg/cache"
 	"github.com/unheilbar/hls_frontend_api/pkg/handler"
@@ -13,16 +16,33 @@ import (
 )
 
 func main() {
+
+	if err := godotenv.Load(); err != nil {
+		logrus.Fatalf("error loading env variables: %s", err.Error())
+	}
+
 	srv := new(hls_frontend_api.Server)
 
-	cache := cache.NewCache()
+	cacheExpireTime, err := strconv.Atoi(os.Getenv("user_cache_expire_time"))
+
+	if err != nil {
+		logrus.Fatalf("error loading env variables: %s", err.Error())
+	}
+
+	cacheCleanupInterval, err := strconv.Atoi(os.Getenv("user_cache_expire_time"))
+
+	if err != nil {
+		logrus.Fatalf("error loading env variables: %s", err.Error())
+	}
+
+	cache := cache.NewCache(cacheExpireTime, cacheCleanupInterval)
 
 	services := service.NewService(cache)
 
 	handlers := handler.NewHandler(services)
 
 	go func() {
-		if err := srv.Run("3000", handlers.InitRoutes()); err != nil {
+		if err := srv.Run(os.Getenv("port"), handlers.InitRoutes()); err != nil {
 			fmt.Printf("error occured while running http server: %s", err.Error())
 		}
 	}()

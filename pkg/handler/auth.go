@@ -1,16 +1,19 @@
 package handler
 
 import (
+	"regexp"
+
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	aliasHeader     = "x-original-uri"
+	aliasHeader     = "X-Original-URI"
 	realIpHeader    = "X-Real-IP"
 	forwardedHeader = "X-Forwarded-For"
+	UriHeader       = "Requested-Uri"
 )
 
-func (h *Handler) Auth(c *gin.Context) {
+func (h *Handler) auth(c *gin.Context) {
 	channelAllias := c.GetHeader(aliasHeader)
 
 	if channelAllias == "" {
@@ -23,19 +26,16 @@ func (h *Handler) Auth(c *gin.Context) {
 		userIp = c.GetHeader(forwardedHeader)
 	}
 
-	response, err := h.services.GetResponseCode(userIp, channelAllias)
+	Uri := c.GetHeader(UriHeader)
 
-	//h.services.AddUserCacheItem(userIp, channelAllias)
+	r, _ := regexp.Compile(`/playlist/program/.*m3u8`)
 
-	if err != nil {
-		c.AbortWithStatus(500)
-		return
+	var response int
+	if r.MatchString(Uri) {
+		response, _ = h.services.GetResponseCodeArchive(userIp)
+	} else {
+		response, _ = h.services.GetResponseCodeChannel(userIp, channelAllias)
 	}
 
 	c.Status(response)
-}
-
-func (h *Handler) UpdateChannelsCache(c *gin.Context) {
-	h.services.UpdateChannelsCache()
-	c.Status(200)
 }

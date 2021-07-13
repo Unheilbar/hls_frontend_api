@@ -4,18 +4,27 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
-)
 
-const (
-	baseUpdateChannelsUrl = "http://vladlink.tv/playlist/getfronthls"
+	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 )
 
 type ChannelItem struct {
 	Id int `json: "id"`
 }
 
+func Init() {
+	if err := godotenv.Load(); err != nil {
+		logrus.Fatalf("error loading env variables: %s", err.Error())
+	}
+}
+
 func GetChannelsInfo() (map[string]ChannelItem, error) {
+
+	baseUpdateChannelsUrl := os.Getenv("channels_update_url")
+
 	var result map[string]ChannelItem
 
 	var myClient = &http.Client{Timeout: 3 * time.Second}

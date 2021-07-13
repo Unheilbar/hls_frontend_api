@@ -1,17 +1,20 @@
 package cache
 
-import "github.com/unheilbar/hls_frontend_api/pkg/channels_update"
+import (
+	"github.com/unheilbar/hls_frontend_api/pkg/channels_update"
+)
 
 type UsersCache interface {
-	GetResponseCode(userIp string, channelAllias string) (int, error)
 	ClearUserCacheByIp(userIp string)
 	ClearUserCacheByUid(uid int)
 	AddUserCacheItem(userIp string, item UserCacheItem)
 	GetUserCacheByIp(userIp string) (UserCacheItem, bool)
+	CleanExpired()
 }
 
 type ChannelsCache interface {
 	UpdateChannelsCache(map[string]channels_update.ChannelItem)
+	GetChannelId(allias string) (int, bool)
 }
 
 type Cache struct {
@@ -19,9 +22,9 @@ type Cache struct {
 	ChannelsCache
 }
 
-func NewCache() *Cache {
+func NewCache(cleanupInterval int, expireTime int) *Cache {
 	return &Cache{
-		UsersCache:    NewUsersCache(),
+		UsersCache:    NewUsersCache(expireTime, cleanupInterval),
 		ChannelsCache: NewChannelsCache(),
 	}
 }

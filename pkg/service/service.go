@@ -5,7 +5,8 @@ import (
 )
 
 type Auth interface {
-	GetResponseCode(userIp string, channelAllias string) (int, error)
+	GetResponseCodeChannel(userIp string, channelAllias string) (int, error)
+	GetResponseCodeArchive(userIp string) (int, error)
 }
 
 type UsersCacheList interface {
@@ -27,7 +28,7 @@ type Service struct {
 
 func NewService(cache *cache.Cache) *Service {
 	return &Service{
-		Auth:           NewCacheAuth(cache.UsersCache),
+		Auth:           NewCacheAuth(cache.ChannelsCache, cache.UsersCache),
 		UsersCacheList: NewUsersCacheListService(cache.UsersCache),
 		ChannelsCache:  NewChannelsCacheService(cache.ChannelsCache),
 	}

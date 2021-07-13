@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/unheilbar/hls_frontend_api/pkg/channels_update"
@@ -18,8 +19,18 @@ func NewChannelsCache() *ChannelsCacheList {
 }
 
 func (c *ChannelsCacheList) UpdateChannelsCache(chanInfo map[string]channels_update.ChannelItem) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
 	c.ChannelsCache = make(map[string]int, len(chanInfo))
 	for channel, chanId := range chanInfo {
 		c.ChannelsCache[channel] = chanId.Id
 	}
+	fmt.Printf("Channels cache updated. Cache size %v \n", len(c.ChannelsCache))
+}
+
+func (c *ChannelsCacheList) GetChannelId(allias string) (int, bool) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+	id, ok := c.ChannelsCache[allias]
+	return id, ok
 }
