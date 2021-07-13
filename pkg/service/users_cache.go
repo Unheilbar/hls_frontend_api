@@ -10,22 +10,17 @@ func NewUsersCacheListService(cache cache.UsersCache) *UsersCacheService {
 	return &UsersCacheService{cache: cache}
 }
 
-func (cs *UsersCacheService) ClearUserCacheByIp(userIp string) {
-	cs.cache.ClearUserCacheByIp(userIp)
+func (c *UsersCacheService) ClearUserCacheByIp(userIp string) {
+	c.cache.ClearUserCacheByIp(userIp)
+}
+func (c *UsersCacheService) AddUserCacheItem(userIp string, item cache.UserCacheItem) {
+	c.cache.AddUserCacheItem(userIp, item)
 }
 
-func (cs *UsersCacheService) GetUserCacheByIp(userIp string) (cache.UserCacheItem, bool) {
-	UserItem, ok := cs.cache.GetUserCacheByIp(userIp)
-	if !ok {
-		//
-	}
-	return UserItem, ok
+func (c *UsersCacheService) ClearUserCacheByUid(uid int) {
+	c.cache.ClearUserCacheByUid(uid)
 }
 
-func (cs *UsersCacheService) AddUserCacheItem(userIp string, item cache.UserCacheItem) {
-	cs.cache.AddUserCacheItem(userIp, item)
-}
-
-func (cs *UsersCacheService) ClearUserCacheByUid(uid int) {
-	cs.cache.ClearUserCacheByUid(uid)
+func (c *UsersCacheService) GetUserCacheByIp(userIp string) (cache.UserCacheItem, bool) {
+	return c.cache.GetUserCacheByIp(userIp)
 }

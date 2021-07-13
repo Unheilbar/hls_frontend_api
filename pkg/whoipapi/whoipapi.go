@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+
+	"github.com/unheilbar/hls_frontend_api/pkg/cache"
 )
 
 const (
@@ -36,4 +38,25 @@ func getJson(url string, target *WhoipApiResponse) error {
 	defer r.Body.Close()
 
 	return json.NewDecoder(r.Body).Decode(target)
+}
+
+func GetUserItemFromResponse(r WhoipApiResponse) (cache.UserCacheItem, bool) {
+	var access bool
+	if r.Arh == 1 {
+		access = true
+	} else {
+		access = false
+	}
+	item := cache.UserCacheItem{
+		Arh:  access,
+		Ser:  r.Ser,
+		Uid:  r.Uid,
+		Time: time.Now().Local(),
+	}
+
+	if len(r.Ser) > 0 {
+		return item, true
+	} else {
+		return item, false
+	}
 }

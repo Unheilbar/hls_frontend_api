@@ -16,7 +16,7 @@ type UsersCacheList interface {
 }
 
 type ChannelsCache interface {
-	UpdateChannelsCache()
+	UpdateChannelsCache() error
 }
 
 type Service struct {

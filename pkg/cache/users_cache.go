@@ -8,7 +8,7 @@ import (
 type UserCacheItem struct {
 	Uid  int
 	Time time.Time
-	Seg  []int
+	Ser  []int
 	Arh  bool
 }
 

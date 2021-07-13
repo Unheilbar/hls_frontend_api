@@ -1,5 +1,7 @@
 package cache
 
+import "github.com/unheilbar/hls_frontend_api/pkg/channels_update"
+
 type UsersCache interface {
 	GetResponseCode(userIp string, channelAllias string) (int, error)
 	ClearUserCacheByIp(userIp string)
@@ -9,7 +11,7 @@ type UsersCache interface {
 }
 
 type ChannelsCache interface {
-	UpdateChannelsCache()
+	UpdateChannelsCache(map[string]channels_update.ChannelItem)
 }
 
 type Cache struct {

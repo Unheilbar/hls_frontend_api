@@ -2,38 +2,37 @@ package channels_update
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"time"
 )
 
 const (
-	baseWhoIpUrl = "http://vladlink.tv/playlist/whocha/whoip/?hlswhoip="
+	baseUpdateChannelsUrl = "http://vladlink.tv/playlist/getfronthls"
 )
 
-type ChannelsInfo struct {
-	Uid int
-	Arh int
-	Ser []int
+type ChannelItem struct {
+	Id int `json: "id"`
 }
 
-func GetWhoApiResponse(userIp string) (WhoipApiResponse, error) {
-	result := &WhoipApiResponse{}
-	err := getJson(baseWhoIpUrl+userIp, result)
+func GetChannelsInfo() (map[string]ChannelItem, error) {
+	var result map[string]ChannelItem
 
-	if err != nil {
-		return WhoipApiResponse{}, err
-	}
-
-	return *result, nil
-}
-
-func getJson(url string, target *WhoipApiResponse) error {
 	var myClient = &http.Client{Timeout: 3 * time.Second}
-	r, err := myClient.Get(url)
-	if err != nil {
-		return err
-	}
-	defer r.Body.Close()
 
-	return json.NewDecoder(r.Body).Decode(target)
+	r, err := myClient.Get(baseUpdateChannelsUrl)
+
+	if err != nil {
+		return result, err
+	}
+
+	resp, errResp := ioutil.ReadAll(r.Body)
+
+	if errResp != nil {
+		return result, err
+	}
+
+	err = json.Unmarshal(resp, &result)
+
+	return result, err
 }

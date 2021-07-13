@@ -1,6 +1,11 @@
 package service
 
-import "github.com/unheilbar/hls_frontend_api/pkg/cache"
+import (
+	"log"
+
+	"github.com/unheilbar/hls_frontend_api/pkg/cache"
+	"github.com/unheilbar/hls_frontend_api/pkg/channels_update"
+)
 
 type ChannelsCacheService struct {
 	cache cache.ChannelsCache
@@ -12,6 +17,14 @@ func NewChannelsCacheService(cache cache.ChannelsCache) *ChannelsCacheService {
 	}
 }
 
-func (cs *ChannelsCacheService) UpdateChannelsCache() {
+func (cs *ChannelsCacheService) UpdateChannelsCache() error {
+	channelsInfo, err := channels_update.GetChannelsInfo()
+	if err != nil {
+		log.Fatal("Error occured during updating channels cache")
+		return err
+	}
 
+	cs.cache.UpdateChannelsCache(channelsInfo)
+
+	return nil
 }
