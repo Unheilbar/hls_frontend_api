@@ -57,7 +57,7 @@ func (c *UsersCacheList) AddUserCacheItem(userIp string, item UserCacheItem) {
 	c.mx.Lock()
 	defer c.mx.Unlock()
 	c.CacheMap[userIp] = item
-	logrus.Printf("User %v added. Cache size %v  arhv %v", item.Uid, len(c.CacheMap), item.Arh)
+	logrus.Printf("User %v added. Cache size %v  arhv %v", userIp, len(c.CacheMap), item.Arh)
 }
 
 func (c *UsersCacheList) ClearUserCacheByIp(userIp string) {

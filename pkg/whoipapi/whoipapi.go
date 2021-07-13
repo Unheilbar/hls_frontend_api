@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -37,9 +38,18 @@ func FetchUserItemByIp(userIp string) (cache.UserCacheItem, error) {
 
 }
 func getJson(url string, target *whoipApiResponse) error {
-	var myClient = &http.Client{Timeout: 3 * time.Second}
-	r, err := myClient.Get(url)
+	clienTimeout, err := strconv.Atoi(os.Getenv("who_ip_timeout"))
+
 	if err != nil {
+		clienTimeout = 5
+	}
+
+	var myClient = &http.Client{Timeout: time.Duration(clienTimeout) * time.Second}
+
+	r, err := myClient.Get(url)
+
+	if err != nil {
+		logrus.Errorf("Error occured on %v request %v", err)
 		return err
 	}
 	defer r.Body.Close()

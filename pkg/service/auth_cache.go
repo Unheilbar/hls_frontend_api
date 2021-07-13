@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/unheilbar/hls_frontend_api/pkg/cache"
 	"github.com/unheilbar/hls_frontend_api/pkg/whoipapi"
 )
@@ -40,8 +41,11 @@ func (a *AuthCacheService) GetResponseCodeChannel(userIp string, channelAllias s
 
 	// if user doesn't exists then we try to fetch it
 	userItem, err := whoipapi.FetchUserItemByIp(userIp)
+
+	// if api response is bad we give access to a user, but not add user into cache
 	if err != nil {
-		return 403, fmt.Errorf("error occured during fetching data for %v", userIp)
+		logrus.Errorf("error occured when %v data was fetched", err.Error())
+		return 200, err
 	}
 
 	// add user in cache in case of success
@@ -70,7 +74,8 @@ func (a *AuthCacheService) GetResponseCodeArchive(userIp string) (int, error) {
 	// if user doesn't exists then we try to fetch it
 	userItem, err := whoipapi.FetchUserItemByIp(userIp)
 	if err != nil {
-		return 403, fmt.Errorf("error occured during fetching data for %v", userIp)
+		logrus.Errorf("error occured when %v data was fetched", err.Error())
+		return 200, err
 	}
 
 	// add user in cache in case of success

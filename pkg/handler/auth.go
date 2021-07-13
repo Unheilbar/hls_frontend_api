@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	aliasHeader     = "X-Original-URI"
-	realIpHeader    = "X-Real-IP"
+	aliasHeader     = "X-Real-IP"
+	realIpHeader    = "X-Original-URI"
 	forwardedHeader = "X-Forwarded-For"
 	UriHeader       = "Requested-Uri"
 )
