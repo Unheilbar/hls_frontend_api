@@ -11,9 +11,12 @@ type ChannelsCacheService struct {
 }
 
 func NewChannelsCacheService(cache cache.ChannelsCache) *ChannelsCacheService {
-	return &ChannelsCacheService{
+	ccs := &ChannelsCacheService{
 		cache: cache,
 	}
+	defer ccs.UpdateChannelsCache()
+
+	return ccs
 }
 
 func (cs *ChannelsCacheService) UpdateChannelsCache() error {
