@@ -22,9 +22,9 @@ type Cache struct {
 	ChannelsCache
 }
 
-func NewCache(cleanupInterval int, expireTime int) *Cache {
+func NewCache() *Cache {
 	return &Cache{
-		UsersCache:    NewUsersCache(expireTime, cleanupInterval),
+		UsersCache:    NewUsersCache(),
 		ChannelsCache: NewChannelsCache(),
 	}
 }

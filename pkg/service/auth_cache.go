@@ -9,14 +9,16 @@ import (
 )
 
 type AuthCacheService struct {
-	cc cache.ChannelsCache
-	uc cache.UsersCache
+	cc        cache.ChannelsCache
+	uc        cache.UsersCache
+	semaphore chan struct{}
 }
 
 func NewCacheAuth(cc cache.ChannelsCache, uc cache.UsersCache) *AuthCacheService {
 	return &AuthCacheService{
-		cc: cc,
-		uc: uc,
+		cc:        cc,
+		uc:        uc,
+		semaphore: make(chan struct{}, 100), //amount of parallel requests to api
 	}
 }
 
@@ -40,11 +42,12 @@ func (a *AuthCacheService) GetResponseCodeChannel(userIp string, channelAllias s
 	}
 
 	// if user doesn't exists then we try to fetch it
-	userItem, err := whoipapi.FetchUserItemByIp(userIp)
+	a.semaphore <- struct{}{}
+	userItem, err := whoipapi.FetchUserItemByIp(userIp, &a.semaphore)
 
-	// if api response is bad we give access to a user, but not add user into cache
+	// if api response is bad we give access to a user, but do not add user into cache
 	if err != nil {
-		logrus.Errorf("error occured when %v data was fetched", err.Error())
+		logrus.Errorf("Bad api response for user %v", userIp)
 		return 200, err
 	}
 
@@ -72,7 +75,9 @@ func (a *AuthCacheService) GetResponseCodeArchive(userIp string) (int, error) {
 	}
 
 	// if user doesn't exists then we try to fetch it
-	userItem, err := whoipapi.FetchUserItemByIp(userIp)
+	a.semaphore <- struct{}{}
+
+	userItem, err := whoipapi.FetchUserItemByIp(userIp, &a.semaphore)
 	if err != nil {
 		logrus.Errorf("error occured when %v data was fetched", err.Error())
 		return 200, err

@@ -1,9 +1,12 @@
 package cache
 
 import (
+	"os"
+	"strconv"
 	"sync"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,13 +23,32 @@ type UsersCacheList struct {
 	expireTime int
 }
 
-func NewUsersCache(expireTime int, cleanupInterval int) *UsersCacheList {
-	uc := &UsersCacheList{
-		CacheMap:   make(map[string]UserCacheItem, 500),
-		expireTime: expireTime,
+func Init() {
+	if err := godotenv.Load(); err != nil {
+		logrus.Fatalf("error loading env variables: %s", err.Error())
+	}
+}
+
+func NewUsersCache() *UsersCacheList {
+
+	cacheExpireTime, err := strconv.Atoi(os.Getenv("user_cache_expire_time"))
+
+	if err != nil {
+		logrus.Fatalf("error loading env variables: %s", err.Error())
 	}
 
-	uc.StartGC(cleanupInterval)
+	cacheCleanupInterval, err := strconv.Atoi(os.Getenv("user_cache_cleanup_interval"))
+
+	if err != nil {
+		logrus.Fatalf("error loading env variables: %s", err.Error())
+	}
+
+	uc := &UsersCacheList{
+		CacheMap:   make(map[string]UserCacheItem, 1500),
+		expireTime: cacheExpireTime,
+	}
+
+	uc.StartGC(cacheCleanupInterval)
 
 	return uc
 }
@@ -43,13 +65,12 @@ func (c *UsersCacheList) GC(cleanupInterval int) {
 }
 
 func (c *UsersCacheList) GetUserCacheByIp(userIp string) (UserCacheItem, bool) {
-	c.mx.RLock()
-	defer c.mx.RUnlock()
+	c.mx.Lock()
+	defer c.mx.Unlock()
 	res, ok := c.CacheMap[userIp]
 	if ok {
-		logrus.Printf("Got user %v from cache ", userIp)
+		logrus.Tracef("Got user %v from cache ", userIp)
 	}
-
 	return res, ok
 }
 
@@ -57,14 +78,14 @@ func (c *UsersCacheList) AddUserCacheItem(userIp string, item UserCacheItem) {
 	c.mx.Lock()
 	defer c.mx.Unlock()
 	c.CacheMap[userIp] = item
-	logrus.Printf("User %v added. Cache size %v  arhv %v", userIp, len(c.CacheMap), item.Arh)
+	logrus.Infof("User %v added. Cache size %v  arhv %v uid %v, time %v", userIp, len(c.CacheMap), item.Arh, item.Uid, item.CreatedTime)
 }
 
 func (c *UsersCacheList) ClearUserCacheByIp(userIp string) {
 	c.mx.Lock()
 	defer c.mx.Unlock()
 	delete(c.CacheMap, userIp)
-	logrus.Printf("User with ip %v has been deleted ", userIp)
+	logrus.Infof("User with ip %v has been deleted ", userIp)
 }
 
 func (c *UsersCacheList) ClearUserCacheByUid(uid int) {
@@ -73,7 +94,7 @@ func (c *UsersCacheList) ClearUserCacheByUid(uid int) {
 	for key, val := range c.CacheMap {
 		if val.Uid == uid {
 			delete(c.CacheMap, key)
-			logrus.Printf("User with id %v has been deleted ", uid)
+			logrus.Infof("User with id %v has been deleted ", uid)
 		}
 	}
 }
@@ -83,6 +104,12 @@ func (c *UsersCacheList) CleanExpired() {
 	defer c.mx.Unlock()
 	logrus.Printf("GC is starting... User cache size %v ", len(c.CacheMap))
 	for key, val := range c.CacheMap {
+		// clear cache for users with uid = 0
+		if val.Uid == 0 {
+			delete(c.CacheMap, key)
+			logrus.Printf("Cache for user id:%v has expired ", key)
+			continue
+		}
 		if time.Now().Unix()-val.CreatedTime.Unix() > int64(c.expireTime) {
 			delete(c.CacheMap, key)
 			logrus.Printf("Cache for user id:%v has expired ", key)

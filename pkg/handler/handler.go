@@ -2,11 +2,12 @@ package handler
 
 import (
 	"os"
+	"strconv"
 
+	limit "github.com/aviddiviner/gin-limit"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
-
 	"github.com/unheilbar/hls_frontend_api/pkg/service"
 )
 
@@ -27,16 +28,26 @@ func NewHandler(services *service.Service) *Handler {
 func (h *Handler) InitRoutes() *gin.Engine {
 
 	mode := os.Getenv("mode")
+
 	if mode == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
 	router := gin.New()
+
+	limit_connections, err := strconv.Atoi(os.Getenv("limit_gourutines"))
+
+	if err != nil {
+		limit_connections = 200
+	}
+
+	router.Use(limit.MaxAllowed(limit_connections))
 
 	router.GET("/auth", h.auth)
 
 	router.GET("/streaming/reload_cha", h.updateChannelsCache)
 
-	router.GET("/delete_user/:uid", h.clearUserCacheById)
+	router.GET("/streaming/delete_user/:uid", h.clearUserCacheById)
 
 	return router
 }

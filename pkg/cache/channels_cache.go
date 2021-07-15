@@ -25,7 +25,7 @@ func (c *ChannelsCacheList) UpdateChannelsCache(chanInfo map[string]channels_upd
 	for channel, chanId := range chanInfo {
 		c.ChannelsCache[channel] = chanId.Id
 	}
-	logrus.Printf("Channels cache updated. Cache size %v ", len(c.ChannelsCache))
+	logrus.Infof("Channels cache updated. Cache size %v ", len(c.ChannelsCache))
 }
 
 func (c *ChannelsCacheList) GetChannelId(allias string) (int, bool) {

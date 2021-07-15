@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
 	"github.com/joho/godotenv"
@@ -15,29 +14,21 @@ import (
 )
 
 func main() {
-	logrus.SetFormatter(new(logrus.JSONFormatter))
-
-	logrus.SetLevel(logrus.ErrorLevel)
 
 	if err := godotenv.Load(); err != nil {
 		logrus.Fatalf("error loading env variables: %s", err.Error())
 	}
 
+	logrus.SetFormatter(new(logrus.JSONFormatter))
+
+	mode := os.Getenv("mode")
+	if mode == "release" {
+		logrus.SetLevel(logrus.InfoLevel)
+	}
+
 	srv := new(hls_frontend_api.Server)
 
-	cacheExpireTime, err := strconv.Atoi(os.Getenv("user_cache_expire_time"))
-
-	if err != nil {
-		logrus.Fatalf("error loading env variables: %s", err.Error())
-	}
-
-	cacheCleanupInterval, err := strconv.Atoi(os.Getenv("user_cache_expire_time"))
-
-	if err != nil {
-		logrus.Fatalf("error loading env variables: %s", err.Error())
-	}
-
-	cache := cache.NewCache(cacheExpireTime, cacheCleanupInterval)
+	cache := cache.NewCache()
 
 	services := service.NewService(cache)
 

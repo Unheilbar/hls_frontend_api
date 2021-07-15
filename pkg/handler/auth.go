@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"regexp"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +15,6 @@ const (
 
 func (h *Handler) auth(c *gin.Context) {
 	channelAllias := c.GetHeader(aliasHeader)
-
 	if channelAllias == "" {
 		channelAllias = "hz"
 	}
@@ -28,14 +27,23 @@ func (h *Handler) auth(c *gin.Context) {
 
 	Uri := c.GetHeader(UriHeader)
 
-	r, _ := regexp.Compile(`/playlist/program/.*m3u8`)
-
 	var response int
-	if r.MatchString(Uri) {
+
+	if detectArchiveAuth(Uri) {
 		response, _ = h.services.GetResponseCodeArchive(userIp)
 	} else {
 		response, _ = h.services.GetResponseCodeChannel(userIp, channelAllias)
 	}
 
 	c.Status(response)
+}
+
+func detectArchiveAuth(uri string) bool {
+	splitted := strings.Split(uri, "/")
+	for i, val := range splitted {
+		if val == "timeshift" || (val == "playlist" && i < len(splitted)-1 && splitted[i+1] == "program") {
+			return true
+		}
+	}
+	return false
 }
