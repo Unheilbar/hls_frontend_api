@@ -1,9 +1,9 @@
 package cache
 
 import (
+	"fmt"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	"github.com/unheilbar/hls_frontend_api/pkg/channels_update"
 )
 
@@ -25,7 +25,7 @@ func (c *ChannelsCacheList) UpdateChannelsCache(chanInfo map[string]channels_upd
 	for channel, chanId := range chanInfo {
 		c.ChannelsCache[channel] = chanId.Id
 	}
-	logrus.Infof("Channels cache updated. Cache size %v ", len(c.ChannelsCache))
+	fmt.Printf("Channels cache updated. Cache size %v \n", len(c.ChannelsCache))
 }
 
 func (c *ChannelsCacheList) GetChannelId(allias string) (int, bool) {

@@ -27,6 +27,5 @@ func (cs *ChannelsCacheService) UpdateChannelsCache() error {
 	}
 
 	cs.cache.UpdateChannelsCache(channelsInfo)
-
 	return nil
 }

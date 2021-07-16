@@ -8,7 +8,11 @@ import (
 )
 
 func (h *Handler) updateChannelsCache(c *gin.Context) {
-	h.services.UpdateChannelsCache()
+	err := h.services.UpdateChannelsCache()
+	if err != nil {
+		c.Status(500)
+		return
+	}
 	c.Status(200)
 }
 

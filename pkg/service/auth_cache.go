@@ -8,21 +8,28 @@ import (
 	"github.com/unheilbar/hls_frontend_api/pkg/whoipapi"
 )
 
+type Dependencies struct {
+	whoipApiUrl             string
+	concurrentRequestsLimit int
+}
+
 type AuthCacheService struct {
 	cc        cache.ChannelsCache
 	uc        cache.UsersCache
 	semaphore chan struct{}
+	deps      Dependencies
 }
 
-func NewCacheAuth(cc cache.ChannelsCache, uc cache.UsersCache) *AuthCacheService {
+func NewCacheAuth(cc cache.ChannelsCache, uc cache.UsersCache, deps Dependencies) *AuthCacheService {
 	return &AuthCacheService{
 		cc:        cc,
 		uc:        uc,
-		semaphore: make(chan struct{}, 100), //amount of parallel requests to api
+		semaphore: make(chan struct{}, deps.concurrentRequestsLimit), //amount of concurrent requests to api
+		deps:      deps,
 	}
 }
 
-func (a *AuthCacheService) GetResponseCodeChannel(userIp string, channelAllias string) (int, error) {
+func (a *AuthCacheService) GetResponseCodeChannel(userIp string, channelAllias string, isTimeshift bool) (int, error) {
 	// check if channel allias exists in cache
 	channelId, ok := a.cc.GetChannelId(channelAllias)
 	if !ok {
@@ -31,7 +38,11 @@ func (a *AuthCacheService) GetResponseCodeChannel(userIp string, channelAllias s
 
 	// check if we have user in cache
 	userItem, ok := a.uc.GetUserCacheByIp(userIp)
+
 	if ok {
+		if isTimeshift && !userItem.Arh {
+			return 403, fmt.Errorf("user %v has no access to timeshift", userIp)
+		}
 		for _, channel := range userItem.Ser {
 			if channelId == channel {
 				// user exists in cache and user has channel in his channel list
@@ -43,7 +54,7 @@ func (a *AuthCacheService) GetResponseCodeChannel(userIp string, channelAllias s
 
 	// if user doesn't exists then we try to fetch it
 	a.semaphore <- struct{}{}
-	userItem, err := whoipapi.FetchUserItemByIp(userIp, &a.semaphore)
+	userItem, err := whoipapi.FetchUserItemByIp(userIp, a.deps.whoipApiUrl, &a.semaphore)
 
 	// if api response is bad we give access to a user, but do not add user into cache
 	if err != nil {
@@ -53,6 +64,10 @@ func (a *AuthCacheService) GetResponseCodeChannel(userIp string, channelAllias s
 
 	// add user in cache in case of success
 	a.uc.AddUserCacheItem(userIp, userItem)
+
+	if isTimeshift && !userItem.Arh {
+		return 403, fmt.Errorf("user %v has no access to timeshift", userIp)
+	}
 
 	for _, channel := range userItem.Ser {
 		if channel == channelId {
@@ -77,7 +92,7 @@ func (a *AuthCacheService) GetResponseCodeArchive(userIp string) (int, error) {
 	// if user doesn't exists then we try to fetch it
 	a.semaphore <- struct{}{}
 
-	userItem, err := whoipapi.FetchUserItemByIp(userIp, &a.semaphore)
+	userItem, err := whoipapi.FetchUserItemByIp(userIp, a.deps.whoipApiUrl, &a.semaphore)
 	if err != nil {
 		logrus.Errorf("error occured when %v data was fetched", err.Error())
 		return 200, err

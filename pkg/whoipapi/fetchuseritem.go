@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"github.com/unheilbar/hls_frontend_api/pkg/cache"
 )
@@ -16,19 +15,8 @@ type whoipApiResponse struct {
 	Ser []int
 }
 
-var baseWhoIpUrl string
+func FetchUserItemByIp(userIp string, baseWhoIpUrl string, semaphore *chan struct{}) (cache.UserCacheItem, error) {
 
-func Innit() {
-	if err := godotenv.Load(); err != nil {
-		logrus.Fatalf("error loading env variables: %s", err.Error())
-	}
-
-	baseWhoIpUrl = "test"
-}
-
-func FetchUserItemByIp(userIp string, semaphore *chan struct{}) (cache.UserCacheItem, error) {
-
-	baseWhoIpUrl = "http://vladlink.tv/playlist/whocha/whoip/?hlswhoip="
 	result := &whoipApiResponse{}
 
 	err := getJson(baseWhoIpUrl+userIp, result)
@@ -45,17 +33,7 @@ func FetchUserItemByIp(userIp string, semaphore *chan struct{}) (cache.UserCache
 var myClient = &http.Client{Timeout: time.Duration(5) * time.Second}
 
 func getJson(url string, target *whoipApiResponse) error {
-	/*clienTimeout, err := strconv.Atoi(os.Getenv("who_ip_timeout"))
-
-	if err != nil {
-		clienTimeout = 5
-	}*/
-	//clienTimeout := 5
-
-	//var myClient = &http.Client{Timeout: time.Duration(clienTimeout) * time.Second}
-	//start := time.Now()
 	r, err := myClient.Get(url)
-	//logrus.Errorf("Elapsed in %v", time.Since(start))
 	if err != nil {
 
 		logrus.Errorf("Error on address %v, %v", url, err.Error())

@@ -38,16 +38,16 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	limit_connections, err := strconv.Atoi(os.Getenv("limit_gourutines"))
 
 	if err != nil {
-		limit_connections = 200
+		limit_connections = 2000
 	}
 
 	router.Use(limit.MaxAllowed(limit_connections))
 
 	router.GET("/auth", h.auth)
 
-	router.GET("/streaming/reload_cha", h.updateChannelsCache)
+	router.GET("/manage/reload_cha", h.updateChannelsCache)
 
-	router.GET("/streaming/delete_user/:uid", h.clearUserCacheById)
+	router.GET("/manage/delete_user/:uid", h.clearUserCacheById)
 
 	return router
 }

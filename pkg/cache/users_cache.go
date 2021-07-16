@@ -102,18 +102,18 @@ func (c *UsersCacheList) ClearUserCacheByUid(uid int) {
 func (c *UsersCacheList) CleanExpired() {
 	c.mx.Lock()
 	defer c.mx.Unlock()
-	logrus.Printf("GC is starting... User cache size %v ", len(c.CacheMap))
+	logrus.Infof("GC is starting... User cache size %v ", len(c.CacheMap))
 	for key, val := range c.CacheMap {
 		// clear cache for users with uid = 0
 		if val.Uid == 0 {
 			delete(c.CacheMap, key)
-			logrus.Printf("Cache for user id:%v has expired ", key)
+			logrus.Infof("Cache for user id:%v has expired ", key)
 			continue
 		}
 		if time.Now().Unix()-val.CreatedTime.Unix() > int64(c.expireTime) {
 			delete(c.CacheMap, key)
-			logrus.Printf("Cache for user id:%v has expired ", key)
+			logrus.Infof("Cache for user id:%v has expired ", key)
 		}
 	}
-	logrus.Printf("GC is finished.. User cache size %v ", len(c.CacheMap))
+	logrus.Infof("GC is finished.. User cache size %v ", len(c.CacheMap))
 }
